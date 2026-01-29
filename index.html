@@ -15,6 +15,9 @@
             --text-color: #334155;
             --bg-color: #525659; /* Màu nền tối trên Desktop */
             --page-bg: #ffffff;
+            --zalo-color: #0068ff;
+            --gmail-color: #ea4335;
+            --facebook-color: #1877f2;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -44,6 +47,130 @@
             white-space: nowrap;
         }
         .btn-download-nav:hover { background-color: var(--secondary-color); }
+
+        /* --- Floating Contact Buttons --- */
+        .floating-contact {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 2000;
+        }
+
+        .contact-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            text-decoration: none;
+            position: relative;
+        }
+
+        .contact-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+        }
+
+        .btn-facebook { background-color: var(--facebook-color); }
+        .btn-zalo { background-color: var(--zalo-color); }
+        .btn-gmail { background-color: var(--gmail-color); }
+
+        /* Tooltip for buttons */
+        .contact-btn::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            right: 60px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+        .contact-btn:hover::after {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* --- Modals for Zalo & Email --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+            backdrop-filter: blur(3px);
+        }
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            position: relative;
+            max-width: 90%;
+            width: 350px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: modalFadeIn 0.3s ease-out;
+        }
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .modal-close {
+            position: absolute;
+            top: 10px; right: 15px;
+            cursor: pointer;
+            font-size: 24px;
+            font-weight: bold;
+            color: #888;
+            line-height: 1;
+        }
+        .modal-close:hover { color: #333; }
+        .modal-img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 1px solid #eee;
+        }
+        .email-box {
+            border: 1px solid #e2e8f0;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 6px;
+            background: #f8fafc;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 1rem;
+            color: #334155;
+        }
+        .btn-copy {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        .btn-copy:hover { background: var(--secondary-color); }
+
 
         /* --- A4 Page Container (Desktop Default) --- */
         .cv-page {
@@ -192,12 +319,18 @@
 
             /* Footer */
             .cv-footer { margin-top: 1rem; }
+
+            /* Di chuyển nút contact lên cao chút để tránh bị che bởi UI của trình duyệt mobile */
+            .floating-contact { bottom: 20px; right: 20px; }
         }
 
         /* --- PRINT / PDF SPECIFICS --- */
         @media print {
             body { background: white; padding: 0; }
             header { display: none; }
+            /* Ẩn nút contact khi in */
+            .floating-contact { display: none; }
+
             .cv-page {
                 width: 100%; height: auto;
                 margin: 0; padding: 40px; /* Trả lại padding chuẩn khi in */
@@ -223,6 +356,49 @@
         </button>
     </nav>
 </header>
+
+<!-- Floating Contact Buttons -->
+<div class="floating-contact" data-html2canvas-ignore="true">
+    <!-- Nút Facebook -->
+    <a href="https://web.facebook.com/nguyen.tung.lam.992075" target="_blank" class="contact-btn btn-facebook" data-tooltip="Facebook">
+        <i class="fab fa-facebook-f"></i>
+    </a>
+    <!-- Nút Zalo - Mở Modal -->
+    <a href="javascript:void(0)" onclick="openZaloModal()" class="contact-btn btn-zalo" data-tooltip="Chat Zalo">
+        <i class="fas fa-comment-dots" style="font-weight: 900;">Z</i>
+    </a>
+    <!-- Nút Gmail - Mở Modal -->
+    <a href="javascript:void(0)" onclick="openEmailModal()" class="contact-btn btn-gmail" data-tooltip="Gửi Email">
+        <i class="fas fa-envelope"></i>
+    </a>
+</div>
+
+<!-- Modal QR Zalo -->
+<div id="zalo-modal" class="modal-overlay" onclick="closeModal(this)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <span class="modal-close" onclick="closeModal(document.getElementById('zalo-modal'))">&times;</span>
+        <h3 style="color: var(--zalo-color); margin-bottom: 10px;">Quét mã QR Zalo</h3>
+        <p style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">Mở ứng dụng Zalo và quét mã để kết bạn</p>
+        <!-- Ảnh QR Zalo (Bạn cần đặt file qrzalo.png cùng thư mục) -->
+        <img src="qrzalo.png" alt="QR Zalo" class="modal-img" onerror="this.src='https://placehold.co/200x200?text=Chưa+có+ảnh+QR'">
+    </div>
+</div>
+
+<!-- Modal Email -->
+<div id="email-modal" class="modal-overlay" onclick="closeModal(this)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <span class="modal-close" onclick="closeModal(document.getElementById('email-modal'))">&times;</span>
+        <h3 style="color: var(--gmail-color); margin-bottom: 10px;">Địa chỉ Email</h3>
+        <p style="font-size: 0.9rem; color: #666;">Sao chép địa chỉ email dưới đây</p>
+        <div class="email-box" id="email-text">tunglam07678@gmail.com</div>
+        <button class="btn-copy" onclick="copyEmail()">
+            <i class="fas fa-copy"></i> Sao chép
+        </button>
+        <p id="copy-status" style="font-size: 0.8rem; color: green; margin-top: 10px; opacity: 0; transition: opacity 0.3s; font-weight: 500;">
+            <i class="fas fa-check-circle"></i> Đã sao chép!
+        </p>
+    </div>
+</div>
 
 <div id="cv-container">
 
@@ -335,8 +511,8 @@
                 <div class="item-desc">
                     <ul>
                         <li>Được đào tạo bài bản theo quy trình chuẩn Nhật Bản.</li>
-                        <li>Sử dụng thành thạo ngôn ngữ C#, .NET Framework.</li>
-                        <li>Đọc hiểu và xử lý tài liệu kỹ thuật tiếng Nhật.</li>
+                        <li>Sử dụng thành thạo ngôn ngữ C#, .NET Framework, đọc hiểu tài liệu kỹ thuật tiếng Nhật.</li>
+                        <li><strong>Thành tích:</strong> Tham gia phát triển 2 dự án .NET (5 màn hình). Cải thiện đáng kể hiệu suất làm việc: từ mất 2 tuần cho màn hình đầu tiên xuống chỉ còn 2 ngày cho màn hình cuối cùng.</li>
                         <li>Ứng dụng AI của công ty để tối ưu hóa 30% thời gian xử lý công việc.</li>
                     </ul>
                 </div>
@@ -460,6 +636,31 @@
 
         // Tạo PDF
         html2pdf().set(opt).from(element).save();
+    }
+
+    // --- JS cho Modal ---
+    function openZaloModal() {
+        document.getElementById('zalo-modal').style.display = 'flex';
+    }
+
+    function openEmailModal() {
+        document.getElementById('email-modal').style.display = 'flex';
+    }
+
+    function closeModal(modal) {
+        modal.style.display = 'none';
+    }
+
+    function copyEmail() {
+        const emailText = document.getElementById('email-text').innerText;
+        navigator.clipboard.writeText(emailText).then(() => {
+            const status = document.getElementById('copy-status');
+            status.style.opacity = '1';
+            setTimeout(() => { status.style.opacity = '0'; }, 2000);
+        }).catch(err => {
+            console.error('Không thể sao chép: ', err);
+            alert('Không thể tự động sao chép, vui lòng chọn và chép thủ công.');
+        });
     }
 </script>
 </body>
